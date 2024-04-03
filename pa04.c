@@ -51,13 +51,7 @@ int main(int argc, char* argv[]) {
     fgets(buffer, MAX_LINE_LENGTH, input_fp);
     int command_count = atoi(buffer);
 
-    node* root = (node*) malloc(sizeof(node));
-    if (root == NULL) {
-        return -1;
-    }
-    root->person = NULL;
-    root->left = NULL;
-    root->right = NULL;
+    node* root = NULL;
 
     for (int i = 0; i < command_count; i++) {
 
@@ -76,7 +70,8 @@ int main(int argc, char* argv[]) {
                 return -1;
             }
 
-            add_tree_node(root, person);
+            add_tree_node(&root, person);
+            // printf("%s    ", root->person->name);
         }
         else if (strcmp(command, "sub") == 0) {
             customer* person = create_customer(name, points);
@@ -91,7 +86,7 @@ int main(int argc, char* argv[]) {
         else if (strcmp(command, "search") == 0) {
             customer* person = create_customer(name, points);
             node* temp = search_tree(root, person->name, 0, root);
-            if (temp->person == NULL) {
+            if (temp == NULL) {
                 printf("%s not found\n", person->name);
             }
             else if (strcmp(person->name, temp->person->name) == 0) {
@@ -134,21 +129,99 @@ node* init_node(customer* person) {
 }
 
 void del_tree_node(node** root, customer* person) {
-    node* temp = search_tree(root, person->name, 1, root);
-    if (temp->person == NULL) {
+    node* parent = search_tree(root, person->name, 1, root);
+    if (parent == NULL) {
         printf("%s not found\n", person->name);
         return;
     }
 
-    if (strcmp(person->name, temp->person->name)) {
+    // If the root we are deleting is the root node of our entire tree
+    if (strcmp(person->name, parent->person->name) == 0) {
 
+        if (parent->left == NULL && parent->right == NULL) {
+            printf("%s deleted\n", parent->person->name);
+            free(parent->person->name);
+            free(parent->person);
+            free(parent);
+            parent = NULL;
+        }
+        else if (parent->left == NULL) {
+            node* to_del = parent;
+            parent = parent->right;
+            printf("%s deleted", to_del->person->name);
+            free(to_del->person->name);
+            free(to_del->person);
+            free(to_del);
+        }
+        else if (parent->right == NULL) {
+            node* to_del = parent;
+            parent = parent->left;
+            printf("%s deleted", to_del->person->name);
+            free(to_del->person->name);
+            free(to_del->person);
+            free(to_del);
+        }
+        else {
+            // inorder
+        }
     }
 
-    if (temp->left != NULL && strcmp(person->name, temp->left->person->name) == 0) {
+    else if (parent->left != NULL && strcmp(person->name, parent->left->person->name) == 0) {
 
+        node* to_del = parent->left;
+
+        if (to_del->left == NULL && to_del->right == NULL) {
+            printf("%s deleted\n", to_del->person->name);
+            free(to_del->person->name);
+            free(to_del->person);
+            free(to_del);
+            parent->left = NULL;
+        }
+        else if (to_del->left == NULL) {
+            parent->left = to_del->right;
+            printf("%s deleted\n", to_del->person->name);
+            free(to_del->person->name);
+            free(to_del->person);
+            free(to_del);
+        }
+        else if (to_del->right == NULL) {
+            parent->right = to_del->left;
+            printf("%s deleted\n", to_del->person->name);
+            free(to_del->person->name);
+            free(to_del->person);
+            free(to_del);
+        }
+        else {
+            // in order
+        }
     }
-    else if (temp->right != NULL && strcmp(person->name, temp->right->person->name) == 0) {
+    else if (parent->right != NULL && strcmp(person->name, parent->right->person->name) == 0) {
+        node* to_del = parent->right;
 
+        if (to_del->left == NULL && to_del->right == NULL) {
+            printf("%s deleted\n", to_del->person->name);
+            free(to_del->person->name);
+            free(to_del->person);
+            free(to_del);
+            parent->left = NULL;
+        }
+        else if (to_del->left == NULL) {
+            parent->left = to_del->right;
+            printf("%s deleted\n", to_del->person->name);
+            free(to_del->person->name);
+            free(to_del->person);
+            free(to_del);
+        }
+        else if (to_del->right == NULL) {
+            parent->right = to_del->left;
+            printf("%s deleted\n", to_del->person->name);
+            free(to_del->person->name);
+            free(to_del->person);
+            free(to_del);
+        }
+        else {
+            // in order
+        }
     }
     else {
         printf("%s not found\n", person->name);
@@ -158,7 +231,7 @@ void del_tree_node(node** root, customer* person) {
 
 node* search_tree(node* root, char* name, int parent_flag, node* parent) {
 
-    if (root->person == NULL) {
+    if (root == NULL) {
         return root;
     }
 
@@ -190,12 +263,13 @@ node* search_tree(node* root, char* name, int parent_flag, node* parent) {
     }
 }
 
-void add_tree_node(node* root, customer* person) {
+void add_tree_node(node** root, customer* person) {
 
-    node* temp = search_tree(root, person->name, 0, root);
-    if (temp->person == NULL) {
-        temp->person = person;
-        printf("%s %d\n", root->person->name, root->person->points);
+    node* temp = search_tree(*root, person->name, 0, *root);
+
+    if (temp == NULL) {
+        *root = init_node(person);
+        printf("%s %d\n", (*root)->person->name, (*root)->person->points);
         return;
     }
 
@@ -218,7 +292,7 @@ void add_tree_node(node* root, customer* person) {
             return;
         }
         else {
-            add_tree_node(temp->left, person);
+            add_tree_node(&(temp->left), person);
         }
     }
 
@@ -239,7 +313,7 @@ void add_tree_node(node* root, customer* person) {
             return;
         }
         else {
-            add_tree_node(temp->right, person);
+            add_tree_node(&(temp->right), person);
         }
     }
 
@@ -252,7 +326,7 @@ void add_tree_node(node* root, customer* person) {
 void sub_loyalty_points(node* root, customer* person) {
 
     node* temp = search_tree(root, person->name, 0, root);
-    if (temp->person == NULL) {
+    if (temp == NULL) {
         printf("%s not found\n", person->name);
         return;
     }
